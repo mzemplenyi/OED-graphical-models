@@ -87,6 +87,7 @@ hammingVarRes = NaN(NSIMS, stg.maxExp);
 %% Loop for running the simulations
 for sim = 1:NSIMS
     sprintf('\n Starting simulation %d of %d. \n', sim, NSIMS)
+    cd('C:\Users\Michele\Documents\Jeff Miller\BDAGL\BDAGLMZ')
     [interventionSeq, diagnostics, postE, maxH, hammingMean, hammingVar] = startSim(sim, bnet);
     intvSeqRes(sim,:) = interventionSeq;
     tprRes(sim,:) = diagnostics.tpr;
