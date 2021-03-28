@@ -70,14 +70,16 @@ while(experiment <= stg.maxExp)
         if (isequal(stg.dataOrigin, 'useSachsData') || isequal(stg.dataOrigin, 'sampSimData'))
             interventions = interventionSeq;
         end
-    else %% make interventions cell array
+    else 
         % check if entropy stop criterion is met 
          if entropy.postEntropy < stopThreshold
             sprintf('\n Posterior entropy of %d dropped below stop threshold. Not running experiment %d \n', entropy.postEntropy, experiment)
             break;
-        end    
+         end  
+        % make interventions cell array
         fprintf('\n Beginning Experiment %d \n', experiment)
-        interveneNode = nextIntervention(HExp(:,experiment-1), bnet.eligibleNodes); 
+        % select node to intervene on based on method
+        interveneNode = nextIntervention(HExp(:,experiment-1), bnet.eligibleNodes, stg.method, sim); 
         interventionSeq(experiment) = interveneNode;
         if interveneNode == 0
             nObservationCases = nObsCases; % # observational data cases
