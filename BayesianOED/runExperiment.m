@@ -1,9 +1,8 @@
-function [ bnet, entropy, dg, hamming, seqData, seqClamped, remData, remClamped] = runExperiment(stg, simPath, expNum, nObservationCases, interventions, nInterventionCases, seqData, seqClamped, remData, remClamped )
+function [ bnet, entropy, dg, seqData, seqClamped, remData, remClamped] = runExperiment(stg, simPath, expNum, nObservationCases, interventions, nInterventionCases, seqData, seqClamped, remData, remClamped )
 %UNTITLED2 Summary of this function goes here
 %   Detailed explanation goes here
 bnet = stg.bnet;
 entropy = []; % initialize object to store various types of entropy
-hamming = [];
 if isequal(stg.dataOrigin, 'simFromCPD')
     [sampData, sampClamped] = mkData(bnet, nObservationCases, interventions, nInterventionCases );
     % note that in this case "interventions" is a cell array indicating
@@ -29,7 +28,6 @@ if isequal(stg.method, 'DP')
     PCmat = ep;
     H = entropyDP(bnet.nNodes, ep);
     dg = checkDiagnostics(PCmat, bnet.dag, simPath, expNum);
-    hamming.mean = dg.hd;
     entropy.H = H;
     entropy.postEntropy = max(H);
 else
@@ -82,7 +80,6 @@ else
        dg = checkDiagnostics(PCmat, bnet.dag, simPath, expNum);     
     end
 
-    hamming.mean = dg.hd;
     entropy.postEntropy = posteriorEntropy(samples);
     entropy.H = H;
 end

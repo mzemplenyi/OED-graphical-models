@@ -1,4 +1,4 @@
-function [interventionSeq, diagnostics, postE, maxH, hammingMean, hammingVar] = startSim(stg, sim )
+function [interventionSeq, diagnostics, postE, maxH] = startSim(stg, sim )
 % set stop threshold to any neg number if you only want to use maxExp as
 % to stop running experiments. Otherwise set this to a small positive number.
 stopThreshold = -1; 
@@ -55,8 +55,8 @@ fnr = NaN(1,stg.maxExp);
 postE = NaN(1,stg.maxExp);
 maxH = NaN(1,stg.maxExp);
 HExp = NaN(bnet.nNodes, stg.maxExp); 
-hammingMean = NaN(1,stg.maxExp);
-hammingVar = NaN(1,stg.maxExp);
+hammingDist = NaN(1,stg.maxExp);
+%hammingVar = NaN(1,stg.maxExp);
 
 %% BEGIN WHILE LOOP FOR RUNNING EXPERIMENTS
 while(expNum <= stg.maxExp)
@@ -97,7 +97,7 @@ while(expNum <= stg.maxExp)
         end
     end % closes "if expNum == 1" statement
     
-    [bnet, entropy, dg, hamming, seqData, seqClamped, remData, remClamped] = runExperiment(stg, simPath, expNum, nObservationCases, interventions, nInterventionCases, seqData, seqClamped, remData, remClamped );   
+    [bnet, entropy, dg, seqData, seqClamped, remData, remClamped] = runExperiment(stg, simPath, expNum, nObservationCases, interventions, nInterventionCases, seqData, seqClamped, remData, remClamped );   
     
     HExp(:, expNum) =  entropy.H;
     if(expNum < stg.maxExp) % need this since on last experiment bnet.eligibleNodes might be emptyset and cause error (esp.when sampleSachsData = 1)
@@ -108,8 +108,8 @@ while(expNum <= stg.maxExp)
     fpr(expNum) = dg.fpr;
     tnr(expNum) = dg.tnr;
     fnr(expNum) = dg.fnr;
-    hammingMean(expNum) = hamming.mean;
-    hammingVar(expNum) = hamming.var;    
+    hammingDist(expNum) = dg.hammingDist;
+    %hammingVar(expNum) = hamming.var;    
     % TODO: MAKE SURE THAT THE INTERVENED ON NODE IS REMOVED FROM SET OF ELIGIBLE
     % NODES FOR ALL DATA ORIGIN TYPES
     if (expNum > 1 && (isequal(stg.dataOrigin, 'simFromCPD')))
@@ -134,5 +134,6 @@ diagnostics.tpr = tpr;
 diagnostics.fpr = fpr;
 diagnostics.tnr = tnr;
 diagnostics.fnr = fnr;
+diagnostics.hammingDist = hammingDist;
 
 end % end function 

@@ -49,7 +49,7 @@ function [diagnostics] = checkDiagnostics(PCmat, trueDag, simPath, expNum)
     diagnostics.fpr = fpr;
     diagnostics.tnr = tnr;
     diagnostics.fnr = fnr;
-    diagnostics.hd = hammingDist;
+    diagnostics.hammingDist = hammingDist;
     
     
 %     % True Negative Rate of Edge Detection

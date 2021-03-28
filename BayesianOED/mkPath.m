@@ -1,5 +1,5 @@
 
-addpath('Sim Scenarios');
+
 addpath('Shared');
 addpath('StructureMcmc');
 addpath('DP');

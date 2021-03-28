@@ -10,7 +10,7 @@
 %% point to the DAG that will be used to generate data
 stg.bnet = mkBnet('ten'); % name of structure defined in mkBnet.m (e.g.'line' or 'tree')
 %% specify whether to simulate data given a CPD or point to existing data files
-stg.dataOrigin = 'sampSimData'; % (0) simFromCPD; (1) useSachsData; (2) sampSimData 
+stg.dataOrigin = 'simFromCPD'; % (0) simFromCPD; (1) useSachsData; (2) sampSimData 
 if ~isequal(stg.dataOrigin, 'simFromCPD')
     % EDIT THIS PATH TO POINT TO LOCATION OF DATA FILES
     stg.dataDir = 'C:\Users\Michele\Documents\GitHub\OED-graphical-models\BayesianOED\Sachs Sim Data\1800obs600\';
@@ -20,16 +20,16 @@ end
 %% set simulation settings (stored in 'stg' structure)
 %   this object will be passed to other functions
 NSIMS = 5;
-stg.method  = 'MEC'; % specify partition type or other method, e.g. 'Random' 
+stg.method  = 'DP'; % specify partition type or other method, e.g. 'Random' 
 stg.scen = 1;
 stg.maxExp = 6;
-stg.nInitialObs = 1800;
-stg.nIntvCases = 600;
+stg.nInitialObs = 500;
+stg.nIntvCases = 500;
 stg.seed = 1;
 
 %% MCMC settings
-stg.MCMCsamples = 100000; 
-stg.MCMCburnin = 150000; 
+stg.MCMCsamples = 30000; 
+stg.MCMCburnin = 20000; 
 stg.MCMCglobalFrac = 0.9;
 
 %% setup directory to save results files in 
@@ -69,20 +69,19 @@ end
 rng(stg.seed);
 %% Make figure of benchmark / ground truth DAG used to generate data    
 figure;
-imagesc(bnet.dag, [0 1 ]);
+imagesc(stg.bnet.dag, [0 1 ]);
 title('Adjacency Matrix for True DAG','Interpreter','latex');
-set(gca, 'XTick', 1:bnet.nNodes);
-set(gca, 'YTick', 1:bnet.nNodes);
-set(gca, 'XTickLabel', bnet.names);
-set(gca, 'YTickLabel', bnet.names);
+set(gca, 'XTick', 1:stg.bnet.nNodes);
+set(gca, 'YTick', 1:stg.bnet.nNodes);
+set(gca, 'XTickLabel', stg.bnet.names);
+set(gca, 'YTickLabel', stg.bnet.names);
 set(gcf, 'Position', [0 0 500 400])
 colorbar;
 saveas(gcf, sprintf('%s/benchmarkDAG.png',resPath));
 
-%% create settings file
-stg.bnet = bnet;
+%% save settings object
 stg.resPath = resPath;
-save(sprintf('%s/stg.mat',resPath)); 
+save(sprintf('%s/settings.mat',resPath), 'stg'); 
 %% initialize objects for storing the intervention seq and diagnostic results
 intvSeqRes = NaN(NSIMS, stg.maxExp); 
 tprRes = NaN(NSIMS, stg.maxExp); 
@@ -91,13 +90,13 @@ tnrRes = NaN(NSIMS, stg.maxExp);
 fnrRes = NaN(NSIMS, stg.maxExp); 
 postEntropyRes = NaN(NSIMS, stg.maxExp);
 maxHRes = NaN(NSIMS, stg.maxExp);
-hammingMeanRes = NaN(NSIMS, stg.maxExp);
-hammingVarRes = NaN(NSIMS, stg.maxExp);
+hammingDistRes = NaN(NSIMS, stg.maxExp);
+%hammingVarRes = NaN(NSIMS, stg.maxExp);
 
 %% Loop for running the simulations
 for sim = 1:NSIMS
     sprintf('\n Starting simulation %d of %d. \n', sim, NSIMS)
-    [interventionSeq, diagnostics, postE, maxH, hammingMean, hammingVar] = startSim(stg, sim);
+    [interventionSeq, diagnostics, postE, maxH] = startSim(stg, sim);
     intvSeqRes(sim,:) = interventionSeq;
     tprRes(sim,:) = diagnostics.tpr;
     fprRes(sim,:) = diagnostics.fpr;
@@ -105,8 +104,8 @@ for sim = 1:NSIMS
     fnrRes(sim,:) = diagnostics.fnr;
     postEntropyRes(sim,:) = postE;
     maxHRes(sim,:) = maxH;
-    hammingMeanRes(sim,:) = hammingMean;
-    hammingVarRes(sim,:) = hammingVar;
+    hammingDistRes(sim,:) = diagnostics.hammingDist;
+    %hammingVarRes(sim,:) = hammingVar;
     
     csvwrite(sprintf('%s/intvSeq_Results.csv',resPath),intvSeqRes);
     csvwrite(sprintf('%s/tpr_Results.csv',resPath),tprRes);
@@ -115,8 +114,8 @@ for sim = 1:NSIMS
     csvwrite(sprintf('%s/fnr_Results.csv',resPath),fnrRes);
     csvwrite(sprintf('%s/postEntropy_Results.csv',resPath),postEntropyRes);
     csvwrite(sprintf('%s/maxH_Results.csv',resPath),maxHRes);    
-    csvwrite(sprintf('%s/hammingMean_Results.csv',resPath),hammingMeanRes);
-    csvwrite(sprintf('%s/hammingVar_Results.csv',resPath),hammingVarRes);
+    csvwrite(sprintf('%s/hammingDist_Results.csv',resPath),hammingDistRes);
+    %csvwrite(sprintf('%s/hammingVar_Results.csv',resPath),hammingVarRes);
     if isequal(stg.method, 'Random')
         csvwrite(sprintf('%s/randNodeSeq.csv',resPath),randNodeSeq);
     end
