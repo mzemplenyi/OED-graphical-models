@@ -23,7 +23,6 @@ NSIMS = 5;
 stg.method  = 'MEC'; % specify partition type or other method, e.g. 'Random' 
 stg.scen = 1;
 stg.maxExp = 6;
-
 stg.nInitialObs = 1800;
 stg.nIntvCases = 600;
 stg.seed = 1;
