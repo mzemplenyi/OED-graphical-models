@@ -6,9 +6,9 @@ This codebase builds upon the BDAGL (Bayesian Directed Acyclic Graph Learning) M
 
 ## Getting started 
 All relevant code is included in this repository. The code has only been tested on Matlab R2017a and is not guaranteed to work on other versions. To use this code:
-* Clone this repository or download all the code.
-* In Matlab, change the directory to the location of the 'Bayesian_OED' folder.
-* Run the script 'mkPath', which adds all necessary folders to the path and compiles Mex files. 
-
-
-
+* Clone this repository.
+* In Matlab, change the directory to the location of the 'BayesianOED' folder.
+* Run the script 'mkPath', which adds all necessary folders to the path and compiles Mex files.
+* For simulations:
+  * Specify the structure and conditional probability distribution for the DAG that will be used to generate data in the file 'mkBnet'.
+  * Enter the desired simulation settings in the 'startSim' file and then run that script.  
