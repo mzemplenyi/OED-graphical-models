@@ -77,7 +77,7 @@ else
         PCmat = samplesToEdgeMarginals(samples);
         dg = checkDiagnostics(PCmat, bnet.dag, simPath, expNum);  
     elseif isequal(stg.method, 'MEC')
-       H = mecEntropy(bnet, samples); % added this on 2/15/21
+       H = entropyMEC(bnet, samples); % added this on 2/15/21
        PCmat = samplesToEdgeMarginals(samples);
        dg = checkDiagnostics(PCmat, bnet.dag, simPath, expNum);     
     end
