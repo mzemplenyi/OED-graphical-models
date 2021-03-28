@@ -8,8 +8,13 @@ if isequal(stg.dataOrigin, 'simFromCPD')
     % note that in this case "interventions" is a cell array indicating
     % which node to intervene on and what to set it to
 end
-if (isequal(stg.dataOrigin, 'useSachsData') || isequal(stg.dataOrigin, 'sampSimData'))
+if (isequal(stg.dataOrigin, 'useSachsData'))
     [sampData, sampClamped, remData, remClamped, bnet ] = sampleSachsData(bnet, nObservationCases, nInterventionCases, interventions, expNum, remData, remClamped);
+    % note that in this case "interventions" is a vector equal to
+    % interventionSeq
+end
+if (isequal(stg.dataOrigin, 'sampSimData'))
+    [sampData, sampClamped, remData, remClamped, bnet ] = sampleSimData(bnet, nObservationCases, nInterventionCases, interventions, expNum, remData, remClamped);
     % note that in this case "interventions" is a vector equal to
     % interventionSeq
 end

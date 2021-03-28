@@ -112,6 +112,7 @@ while(expNum <= stg.maxExp)
     % NODES FOR ALL DATA ORIGIN TYPES
     if (expNum > 1 && (isequal(stg.dataOrigin, 'simFromCPD')))
         bnet.eligibleNodes(bnet.eligibleNodes == interveneNode) = [];
+        bnet.eligibleNodes(bnet.eligibleNodes == intvNode) = [];
     end
     expNum = expNum + 1;
 end % end while loop for running experiments
