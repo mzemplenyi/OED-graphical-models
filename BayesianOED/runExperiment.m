@@ -1,4 +1,4 @@
-function [ bnet, entropy, dg, hamming, seqData, seqClamped, remData, remClamped] = runExperiment( stg, expNum, nObservationCases, interventions, nInterventionCases, seqData, seqClamped, remData, remClamped )
+function [ bnet, entropy, dg, hamming, seqData, seqClamped, remData, remClamped] = runExperiment(stg, expNum, nObservationCases, interventions, nInterventionCases, seqData, seqClamped, remData, remClamped )
 %UNTITLED2 Summary of this function goes here
 %   Detailed explanation goes here
 bnet = stg.bnet;
