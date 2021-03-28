@@ -8,13 +8,42 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% point to the DAG that will be used to generate data
-stg.bnet = mkBnet('ten2'); % name of structure like 'line' or 'tree'
-% set simulation settings (stored in 'stg' structure)
+stg.bnet = mkBnet('ten'); % name of structure defined in mkBnet.m (e.g.'line' or 'tree')
+%% specify whether to simulate data given a CPD or point to existing data files
+stg.dataOrigin = 'sampSimData'; % (0) simFromCPD; (1) useSachsData; (2) sampSimData 
+if ~isequal(stg.dataOrigin, 'simFromCPD')
+    % EDIT THIS PATH TO POINT TO LOCATION OF DATA FILES
+    stg.dataDir = 'C:\Users\Michele\Documents\GitHub\OED-graphical-models\BayesianOED\Sachs Sim Data\1800obs600\';
+elseif isequal(stg.dataOrigin, 'simFromCPD')
+    genRandomCP
+    % make random conditional probability table (CPT)
+    % from Bayes Net Toolbox help doc: To control the degree of randomness (entropy), 
+    % you can sample each row of the CPT from a Dirichlet(p,p,...) distribution. 
+    % If p << 1, this encourages "deterministic" CPTs (one entry near 1, the rest near 0).
+    % If p = 1, each entry is drawn from U[0,1]. If p >> 1, the entries will all be near 1/k, 
+    % where k is the arity of this node, i.e., each row will be nearly uniform.
+    p = 0.8;
+    for i=1:bnet.nNodes
+        k = bnet.ns(i);
+        ps = parents(bnet.dag, i);
+        psz = prod(bnet.ns(ps));
+        CPT = dirichlet_sample(p*ones(1,k), psz); % this is in the Foreign directory (looks like it was previously called sample_dirichlet)
+        bnet.CPD{i} = tabular_CPD(bnet, i, 'CPT', CPT);      
+        %bnet.CPD{i} = tabular_CPD(bnet, i, 'CPT', CPT, 'dirichlet_type', 'BDeu' );
+    end
+% uncomment below if you want to inspect the CPTs for a given node
+%     for i=1:bnet.nNodes
+%         disp(i)
+%         values = struct2cell(bnet.CPD{i}); values{1}
+%     end
+end
+%% set simulation settings (stored in 'stg' structure)
 %   this object will be passed to other functions
 NSIMS = 5;
 stg.method  = 'MEC'; % specify partition type or other method, e.g. 'Random' 
 stg.scen = 1;
 stg.maxExp = 6;
+
 stg.nInitialObs = 1800;
 stg.nIntvCases = 600;
 stg.seed = 1;
@@ -72,8 +101,10 @@ colorbar;
 saveas(gcf, sprintf('%s/benchmarkDAG.png',resPath));
 
 %% create settings file
+stg.bnet = bnet;
+stg.resPath = resPath;
 save(sprintf('%s/stg.mat',resPath)); 
-%% create objects for storing the intervention seq and diagnostic results
+%% initialize objects for storing the intervention seq and diagnostic results
 intvSeqRes = NaN(NSIMS, stg.maxExp); 
 tprRes = NaN(NSIMS, stg.maxExp); 
 fprRes = NaN(NSIMS, stg.maxExp); 
@@ -87,8 +118,7 @@ hammingVarRes = NaN(NSIMS, stg.maxExp);
 %% Loop for running the simulations
 for sim = 1:NSIMS
     sprintf('\n Starting simulation %d of %d. \n', sim, NSIMS)
-    cd('C:\Users\Michele\Documents\Jeff Miller\BDAGL\BDAGLMZ')
-    [interventionSeq, diagnostics, postE, maxH, hammingMean, hammingVar] = startSim(sim, bnet);
+    [interventionSeq, diagnostics, postE, maxH, hammingMean, hammingVar] = startSim(stg, sim);
     intvSeqRes(sim,:) = interventionSeq;
     tprRes(sim,:) = diagnostics.tpr;
     fprRes(sim,:) = diagnostics.fpr;

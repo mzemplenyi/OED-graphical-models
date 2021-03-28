@@ -8,13 +8,22 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% point to the DAG that will be used to generate data
-stg.bnet = mkBnet('ten2'); % name of structure like 'line' or 'tree'
-% set simulation settings (stored in 'stg' structure)
+stg.bnet = mkBnet('ten'); % name of structure defined in mkBnet.m (e.g.'line' or 'tree')
+%% specify whether to simulate data given a CPD or point to existing data files
+stg.dataOrigin = 'sampSimData'; % (0) simFromCPD; (1) useSachsData; (2) sampSimData 
+if ~isequal(stg.dataOrigin, 'simFromCPD')
+    % EDIT THIS PATH TO POINT TO LOCATION OF DATA FILES
+    stg.dataDir = 'C:\Users\Michele\Documents\GitHub\OED-graphical-models\BayesianOED\Sachs Sim Data\1800obs600\';
+elseif isequal(stg.dataOrigin, 'simFromCPD')
+    stg.bnet = genRandomCPT(stg.bnet);
+end
+%% set simulation settings (stored in 'stg' structure)
 %   this object will be passed to other functions
 NSIMS = 5;
 stg.method  = 'MEC'; % specify partition type or other method, e.g. 'Random' 
 stg.scen = 1;
 stg.maxExp = 6;
+
 stg.nInitialObs = 1800;
 stg.nIntvCases = 600;
 stg.seed = 1;
