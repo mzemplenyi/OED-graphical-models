@@ -7,6 +7,8 @@
 % point to the DAG that will be used to generate data
 bnet = mkBnet('ten2'); % name of structure like 'line' or 'tree'
 % set simulation settings (stored in 'stg' structure)
+%   this object will be passed to other functions
+NSIMS = 50;
 stg.method  = 'MEC'; 
 stg.seed = 1;
 stg.scen = 1;
@@ -17,20 +19,18 @@ stg.nIntvCases = 600;
 stg.MCMCsamples = 100000; 
 stg.MCMCburnin = 150000; 
 stg.MCMCglobalFrac = 0.9;
-global sim;
 global sampleSachs; sampleSachs = 1; % 0 = generate from CPD, 
                                      % 1 = sample from 5400 original Sachs, 
                                      % 2 = sample from simulated data
                                      % specified at top of runToySachs2.m
 
 
-NSIMS = 10;
+
 
 
 global scenPath;
-global mkPlots; mkPlots = 0;
-global mkHamming; mkHamming = 0;
-%rng(stg.scen);% set seed 
+
+
 global randNodeSeq; randNodeSeq = NaN(NSIMS, stg.maxExp-1); 
 s = RandStream('mlfg6331_64');
 if sampleSachs == 1

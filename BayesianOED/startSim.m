@@ -1,136 +1,159 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% startSim.m: script that initiates the Bayesian OED algorithm
-%             using the settings specified at the beginning of
-%             this file.
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function [interventionSeq, diagnostics, postE, maxH, hammingMean, hammingVar] = getObsData(sim, bnet)
+global chooseIntervention; 
+global Scen;
+global scenPath; 
+global simPath;
+global maxExperiment;
+global experiment; experiment = 1;
+global nObsCases; global nInitialObs;
+global nIntvCases;
+global sampleSachs;
+global randNodeSeq;
 
-% point to the DAG that will be used to generate data
-bnet = mkBnet('ten2'); % name of structure like 'line' or 'tree'
-% set simulation settings (stored in 'stg' structure)
-%   this object will be passed to other functions
-stg.method  = 'MEC'; 
-stg.seed = 1;
-stg.scen = 1;
-stg.maxExp = 6;
-stg.nInitialObs = 1800;
-stg.nIntvCases = 600;
-% MCMC settings
-stg.MCMCsamples = 100000; 
-stg.MCMCburnin = 150000; 
-stg.MCMCglobalFrac = 0.9;
-global sim;
-global sampleSachs; sampleSachs = 1; % 0 = generate from CPD, 
-                                     % 1 = sample from 5400 original Sachs, 
-                                     % 2 = sample from simulated data
-                                     % specified at top of runToySachs2.m
+if sampleSachs == 2  % sample from simulated Sachs data with interventions on all 11 nodes
+    %cd('C:/Users/Michele/Documents/Jeff Miller/BDAGL/BDAGLMZ/Sim Data/EightTree_200/');
+    cd('C:/Users/Michele/Documents/Jeff Miller/BDAGL/BDAGLMZ/Sim Data/EightLine/');
+    %cd('C:/Users/Michele/Documents/Jeff Miller/BDAGL/BDAGLMZ/Asia Sim Data/300obs300_yes/');
+    %cd('C:/Users/Michele/Documents/Jeff Miller/BDAGL/BDAGLMZ/Sachs Sim Data/1800obs600/');
+    datafile = sprintf('data_%d.csv', sim);
+    data = csvread(datafile);
+   %datafile       = dir(sprintf('C:/Users/Michele/Documents/Jeff Miller/BDAGL/BDAGLMZ/Sachs Sim Data/500obs100/data_%d.csv',sim));
+    %data = csvread(datafile.name);
+    %data = csvread('C:/Users/Michele/Documents/Jeff Miller/BDAGL/BDAGLMZ/Sachs Sim Data/sachsData_noheader20190812.csv');
+    data = data';
+    %clampedfile       = dir(sprintf('C:/Users/Michele/Documents/Jeff Miller/BDAGL/BDAGLMZ/Sachs Sim Data/500obs100/clamped_%d.csv',sim));
+    clampedfile = sprintf('clamped_%d.csv', sim);
+    clamped = csvread(clampedfile);
+    %clamped = csvread('C:/Users/Michele/Documents/Jeff Miller/BDAGL/BDAGLMZ/Sachs Sim Data/sachsClamped_noheader20190812.csv');
+    clamped = clamped';
+    remData = data;
+    remClamped = clamped;
+end   
 
 
-NSIMS = 10;
-
-
-global scenPath;
-
-
-global randNodeSeq; randNodeSeq = NaN(NSIMS, stg.maxExp-1); 
-s = RandStream('mlfg6331_64');
 if sampleSachs == 1
-    sachsNodes = [2 4 7 8 9 ]; % (had a note to include 9 twice since there is twice as much data for 9 as the others, but I address by sampling 1200 in sampleSachsData.m if intv = 9)   
-    for k=1:NSIMS
-        randNodeSeq(k,:) = datasample(s, sachsNodes, stg.maxExp-1,'Replace',false);
+    %% loads 'data' (11x5400 obs) and 'clamped'(11x5400 obs) 
+    load('C:/Users/Michele/Documents/Jeff Miller/BDAGL/BDAGLMZ/demos2/sachsDiscretizedData.mat'); %% move this to runSachs.m file
+    %% initially all the data is the "remaining" data
+    remData = data;
+    remClamped = clamped;
+end
+if sampleSachs == 0
+    remData = [];
+    remClamped = [];
+end
+
+
+
+simPath = sprintf('%sSim%d',scenPath, sim);
+mkdir(simPath)
+stopThreshold = -0.1;
+uncertainty = 1;
+%fixedIntvValue = 1; % 0 = adaptive intvValue, 1 = fixed intvValue
+intvValue = 1; % 1 is low-level, 2 is high-level
+
+
+
+% initialize matrices that will store the sequential data and clamped data
+seqData = NaN(bnet.nNodes, 0);
+seqClamped = NaN(bnet.nNodes, 0);
+
+%% 
+cd 'C:/Users/Michele/Documents/Jeff Miller/BDAGL/BDAGLMZ/';
+interventionSeq = NaN(1,maxExperiment);interventionSeq(1) = 0; % vector to store which experiments are run, first experiment is just observational 
+tpr = NaN(1,maxExperiment);
+fpr = NaN(1,maxExperiment);
+tnr = NaN(1,maxExperiment);
+fnr = NaN(1,maxExperiment);
+postE = NaN(1,maxExperiment);
+%skelE = NaN(1,maxExperiment);
+maxH = NaN(1,maxExperiment);
+HExp = NaN(bnet.nNodes, maxExperiment); 
+hammingMean = NaN(1,maxExperiment);
+hammingVar = NaN(1,maxExperiment);
+
+while(experiment <= maxExperiment)
+    if experiment == 1
+    %% Generate only observational data
+        nObservationCases = nInitialObs; % # observational data cases
+        nInterventionCases = 0; % no interventions
+        if sampleSachs == 0
+            interventions = {};
+        end
+        if (sampleSachs == 1 || sampleSachs == 2)
+            interventions = interventionSeq;
+        end
+    else %% make interventions cell array
+        uncertainty = entropy.postEntropy; % posterior entropy on graphs       
+        if uncertainty < stopThreshold
+            sprintf('\n Uncertainty of %d dropped below stop threshold. Not running experiment %d \n', uncertainty, experiment)
+            break;
+        end    
+        fprintf('\n Beginning Experiment %d \n', experiment)
+        interveneNode = nextIntervention(HExp(:,experiment-1), bnet.eligibleNodes); 
+        interventionSeq(experiment) = interveneNode;
+        if interveneNode == 0
+            nObservationCases = nObsCases; % # observational data cases
+            nInterventionCases = 0; % no interventions
+            if sampleSachs == 0 % added this logic on 6/20/19
+                interventions = {};
+            end
+            if sampleSachs == 1
+                interventions = interventionSeq;
+            end
+        else       
+            nObservationCases = nObsCases; % assumes we only generate obs data on first experiment
+            nInterventionCases = nIntvCases;
+            %nInterventionCases = nIntvCases*(length(interventionSeq)-1);
+            % build up interventions cell array
+            if sampleSachs == 0
+                interventions = cell(1,1);  % changed this 2/23/19 from length(interventionSeq)-1        
+                singleIntv = cell(1, bnet.nNodes);
+                singleIntv{interveneNode} = intvValue;
+                interventions{1} = singleIntv;
+            end
+            if (sampleSachs == 1 || sampleSachs == 2)
+                interventions = interventionSeq;
+            end
+        end % end creating obs or intv data for this experiment 
     end
-end
-
-
-% make array of random numbers for random node interventions
-%randNodeSeq = randi(bnet.nNodes, NSIMS, stg.maxExp); % no restriction
-%on eligible nodes
-% randNodeSeq = randi(length(bnet.eligibleNodes), NSIMS, stg.maxExp);
-% randNodeSeq = bnet.eligibleNodes(randNodeSeq); % map the random numbers to the nodes eligible for intervention
-if (sampleSachs == 0 || sampleSachs == 2)
-    for k=1:NSIMS
-         randNodeSeq(k,:) = datasample(s, bnet.eligibleNodes, stg.maxExp-1,'Replace',false);
-    end
-end
-
-
-rng(stg.seed);
-
-%% set directory to save files in 
-
-if strcmp(stg.method, 'Random')
-    scenPath = 'C:/Users/Michele/Documents/Jeff Miller/BDAGL/BDAGLMZ/Sim Scenarios/compStructures/Random/';
-    cd(scenPath); 
-end
-if strcmp(stg.method, 'DP')
-    scenPath = 'C:/Users/Michele/Documents/Jeff Miller/BDAGL/BDAGLMZ/Sim Scenarios/compStructures/Leong/';
-    cd(scenPath); 
-end
-if strcmp(stg.method, 'MEC')
-    scenPath = 'C:/Users/Michele/Documents/Jeff Miller/BDAGL/BDAGLMZ/Sim Scenarios/compStructures/MEC/';
-    cd(scenPath); 
-end
-% create folder to store results
-scenFolder = sprintf('Scen%d',stg.scen);
-    if ~exist(scenFolder, 'dir') % if it doesn't exist make the folder
-       mkdir(scenFolder)
-    else 
-        stg.scen = stg.scen + 1; % increment scen number by 1 folder already exists
-        scenFolder = sprintf('S%d',stg.scen);
-        mkdir(scenFolder)
-    end
-
-scenPath = sprintf('%s%s/',scenPath, scenFolder);
-
-
     
-    figure;
-    imagesc(bnet.dag, [0 1 ]);
-    title('Adjacency Matrix for True DAG','Interpreter','latex');
-    set(gca, 'XTick', 1:bnet.nNodes);
-    set(gca, 'YTick', 1:bnet.nNodes);
-    set(gca, 'XTickLabel', bnet.names);
-    set(gca, 'YTickLabel', bnet.names);
-    set(gcf, 'Position', [0 0 500 400])
-    colorbar;
-    saveas(gcf, sprintf('%s/BenchmarkDAG.png',scenPath));
+    [bnet, entropy, dg, hamming, seqData, seqClamped, remData, remClamped] = runExperiment2(bnet, nObservationCases, interventions, nInterventionCases, seqData, seqClamped, remData, remClamped );   
+   
+ 
+    HExp(:, experiment) =  entropy.H;
+    if(experiment < maxExperiment) % need this since on last experiment bnet.eligibleNodes might be emptyset and cause error (esp.when sampleSachsData = 1)
+        maxH(experiment) =  max(entropy.H(bnet.eligibleNodes)); 
+    end
+    postE(experiment) = entropy.postEntropy; 
+    tpr(experiment) = dg.tpr;  
+    fpr(experiment) = dg.fpr;
+    tnr(experiment) = dg.tnr;
+    fnr(experiment) = dg.fnr;
+    hammingMean(experiment) = hamming.mean;
+    hammingVar(experiment) = hamming.var;    
+    
+    if (experiment > 1 && sampleSachs == 0 && chooseIntervention ~= 1 && chooseIntervention ~= 2)
+        bnet.eligibleNodes(bnet.eligibleNodes == interveneNode) = [];
+    end
+    experiment = experiment + 1;
+end
+csvwrite(sprintf('%s/interventionSeq.txt',simPath),interventionSeq);
+csvwrite(sprintf('%s/HExp.csv',simPath),HExp);
 
-%% create settings file
-save(sprintf('%s/settings.mat',scenPath)); 
-%% create objects for storing the intervention seq results
-% and match true DAG results of the NSIMS simulations
-intvSeqRes = NaN(NSIMS, stg.maxExp); 
-tprRes = NaN(NSIMS, stg.maxExp); 
-fprRes = NaN(NSIMS, stg.maxExp); 
-tnrRes = NaN(NSIMS, stg.maxExp); 
-fnrRes = NaN(NSIMS, stg.maxExp); 
-postEntropyRes = NaN(NSIMS, stg.maxExp);
-maxHRes = NaN(NSIMS, stg.maxExp);
-hammingMeanRes = NaN(NSIMS, stg.maxExp);
-hammingVarRes = NaN(NSIMS, stg.maxExp);
+%% make the interventionSeq vector the same length as maxExperiments 
+if length(interventionSeq) < maxExperiment
+    interventionSeq(end+1:maxExperiment) = NaN;
+    tpr(end+1:maxExperiment) = NaN;
+    fpr(end+1:maxExperiment) = NaN;
+    tnr(end+1:maxExperiment) = NaN;
+    fnr(end+1:maxExperiment) = NaN;
+    postE(end+1:maxExperiment) = NaN;
+    maxH(end+1:maxExperiment) = NaN;
+end    
+diagnostics.tpr = tpr;
+diagnostics.fpr = fpr;
+diagnostics.tnr = tnr;
+diagnostics.fnr = fnr;
 
-%% Loop for running the simulations
-for sim = 1:NSIMS
-    sprintf('\n Starting simulation %d of %d. \n', sim, NSIMS)
-    cd('C:\Users\Michele\Documents\Jeff Miller\BDAGL\BDAGLMZ')
-    [interventionSeq, diagnostics, postE, maxH, hammingMean, hammingVar] = runToySachs2(sim, bnet);
-    intvSeqRes(sim,1:stg.maxExp) = interventionSeq;
-    tprRes(sim,1:stg.maxExp) = diagnostics.tpr;
-    fprRes(sim,1:stg.maxExp) = diagnostics.fpr;
-    tnrRes(sim,1:stg.maxExp) = diagnostics.tnr;
-    fnrRes(sim,1:stg.maxExp) = diagnostics.fnr;
-    postEntropyRes(sim,1:stg.maxExp) = postE;
-    maxHRes(sim,1:stg.maxExp) = maxH;
-    hammingMeanRes(sim,1:stg.maxExp) = hammingMean;
-    hammingVarRes(sim,1:stg.maxExp) = hammingVar;
-    csvwrite(sprintf('%s/intvSeq_Results.csv',scenPath),intvSeqRes);
-    csvwrite(sprintf('%s/tpr_Results.csv',scenPath),tprRes);
-    csvwrite(sprintf('%s/fpr_Results.csv',scenPath),fprRes);
-    csvwrite(sprintf('%s/tnr_Results.csv',scenPath),tnrRes);
-    csvwrite(sprintf('%s/fnr_Results.csv',scenPath),fnrRes);
-    csvwrite(sprintf('%s/postEntropy_Results.csv',scenPath),postEntropyRes);
-    csvwrite(sprintf('%s/maxH_Results.csv',scenPath),maxHRes);
-    csvwrite(sprintf('%s/randNodeSeq.csv',scenPath),randNodeSeq);
-    csvwrite(sprintf('%s/hammingMean_Results.csv',scenPath),hammingMeanRes);
-    csvwrite(sprintf('%s/hammingVar_Results.csv',scenPath),hammingVarRes);
-end % end for loop over SIMS
-
+end % end function 
