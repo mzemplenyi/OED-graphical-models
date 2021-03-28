@@ -1,0 +1,11 @@
+function [logPrior isCyclic]= sachsGraphLogPrior( dag )
+
+load sachsPriorKEGG
+
+isCyclic = ~acyclic(dag);
+if isCyclic
+  logPrior = -Inf;
+else
+  ndiff = sum(abs(G(:)-Gprior(:)));
+  logPrior = -5*ndiff; % p(G) propto exp(-num differences)
+end

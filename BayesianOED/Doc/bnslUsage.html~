@@ -1,0 +1,14 @@
+<title>The Bayes Net Structure Learning (BNSL) library</title>
+<h1>The Bayes Net Structure Learning (BNSL) library</h1>
+
+Written by Daniel Eaton, 2006--2007.
+
+<h2>Major features</h2>
+
+<ul>
+<li> Computes G_map = arg max_G p(G|D) exactly using dynamic
+programming (DP) using the algorithm of Silander
+</ul>
+
+
+

@@ -1,0 +1,14 @@
+function [logPrior isCyclic]= sachsGraphLogPrior( dag )
+
+[dag, F, H] = sachsTrueDAG();
+isCyclic = ~acyclic(dag);
+if isCyclic
+  logPrior = -Inf;
+else
+  %logPrior = log(1);
+  if isequal(dag,G)
+    logPrior = log(1);
+  else
+    logPrior = -Inf;
+  end
+end
