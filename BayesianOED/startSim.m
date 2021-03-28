@@ -100,7 +100,7 @@ while(experiment <= stg.maxExp)
         end % end creating obs or intv data for this experiment 
     end
     
-    [bnet, entropy, dg, hamming, seqData, seqClamped, remData, remClamped] = runExperiment2(bnet, nObservationCases, interventions, nInterventionCases, seqData, seqClamped, remData, remClamped );   
+    [bnet, entropy, dg, hamming, seqData, seqClamped, remData, remClamped] = runExperiment(stg, nObservationCases, interventions, nInterventionCases, seqData, seqClamped, remData, remClamped );   
    
  
     HExp(:, experiment) =  entropy.H;
