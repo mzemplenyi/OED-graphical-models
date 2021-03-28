@@ -19,8 +19,8 @@ elseif isequal(stg.dataOrigin, 'simFromCPD')
 end
 %% set simulation settings (stored in 'stg' structure)
 %   this object will be passed to other functions
-NSIMS = 5;
-stg.method  = 'DP'; % specify partition type or other method, e.g. 'Random' 
+NSIMS = 3;
+stg.method  = 'MEC'; % specify partition type or other method, e.g. 'Random' 
 stg.scen = 1;
 stg.maxExp = 6;
 stg.nInitialObs = 500;
@@ -55,7 +55,7 @@ dirName = sprintf('%s_Scen%d',stg.method, stg.scen);
     end
 % now add this subdirectory to the results path
 resPath = sprintf('%s%s/',resPath, dirName);
-
+cd .. % move back up a directory
 %% make array of nodes for random node interventions
 %   sample from the eligible nodes without replacement
 if isequal(stg.method, 'Random')
@@ -91,7 +91,6 @@ fnrRes = NaN(NSIMS, stg.maxExp);
 postEntropyRes = NaN(NSIMS, stg.maxExp);
 maxHRes = NaN(NSIMS, stg.maxExp);
 hammingDistRes = NaN(NSIMS, stg.maxExp);
-%hammingVarRes = NaN(NSIMS, stg.maxExp);
 
 %% Loop for running the simulations
 for sim = 1:NSIMS

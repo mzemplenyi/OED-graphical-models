@@ -26,7 +26,7 @@ if isequal(stg.dataOrigin, 'sampSimData')% sample from existing simulated data
     
 elseif isequal(stg.dataOrigin, 'useSachsData')
     %loads 'data' (11x5400 obs) and 'clamped'(11x5400 obs) 
-    load(sprintf('%s/sachsDiscretizedData.mat', stg.dataDir) %% move this to runSachs.m file
+    load(sprintf('%s/sachsDiscretizedData.mat', stg.dataDir)) %% move this to runSachs.m file
     % initially all the data is the "remaining" data
     remData = data;
     remClamped = clamped;
@@ -56,7 +56,6 @@ postE = NaN(1,stg.maxExp);
 maxH = NaN(1,stg.maxExp);
 HExp = NaN(bnet.nNodes, stg.maxExp); 
 hammingDist = NaN(1,stg.maxExp);
-%hammingVar = NaN(1,stg.maxExp);
 
 %% BEGIN WHILE LOOP FOR RUNNING EXPERIMENTS
 while(expNum <= stg.maxExp)
@@ -109,7 +108,7 @@ while(expNum <= stg.maxExp)
     tnr(expNum) = dg.tnr;
     fnr(expNum) = dg.fnr;
     hammingDist(expNum) = dg.hammingDist;
-    %hammingVar(expNum) = hamming.var;    
+
     % TODO: MAKE SURE THAT THE INTERVENED ON NODE IS REMOVED FROM SET OF ELIGIBLE
     % NODES FOR ALL DATA ORIGIN TYPES
     if (expNum > 1 && (isequal(stg.dataOrigin, 'simFromCPD')))
