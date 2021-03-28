@@ -82,14 +82,7 @@ while(experiment <= stg.maxExp)
         interveneNode = nextIntervention(HExp(:,experiment-1), bnet.eligibleNodes, stg.method, sim); 
         interventionSeq(experiment) = interveneNode;
         if interveneNode == 0
-            nObservationCases = nObsCases; % # observational data cases
-            nInterventionCases = 0; % no interventions
-            if sampleSachs == 0 % added this logic on 6/20/19
-                interventions = {};
-            end
-            if sampleSachs == 1
-                interventions = interventionSeq;
-            end
+            % don't think we need to handle this case
         else       
             nObservationCases = nObsCases; % assumes we only generate obs data on first experiment
             nInterventionCases = nIntvCases;
