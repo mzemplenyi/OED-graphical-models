@@ -11,11 +11,16 @@
 stg.bnet = mkBnet('ten'); % name of structure defined in mkBnet.m (e.g.'line' or 'tree')
 %% specify whether to simulate data given a CPD or point to existing data files
 stg.dataOrigin = 'simFromCPD'; % (0) simFromCPD; (1) useSachsData; (2) sampSimData 
-if ~isequal(stg.dataOrigin, 'simFromCPD')
-    % EDIT THIS PATH TO POINT TO LOCATION OF DATA FILES
-    stg.dataDir = 'C:\Users\Michele\Documents\GitHub\OED-graphical-models\BayesianOED\Sachs Sim Data\1800obs600\';
-elseif isequal(stg.dataOrigin, 'simFromCPD')
+if isequal(stg.dataOrigin, 'simFromCPD')
     stg.bnet = genRandomCPT(stg.bnet);
+elseif isequal(stg.dataOrigin, 'useSachsData')
+    % EDIT THIS PATH TO POINT TO LOCATION OF DATA FILES
+    stg.dataDir = sprintf('%s\demos2\',pwd())
+elseif isequal(stg.dataOrigin, 'sampSimData')
+     % EDIT THIS PATH TO POINT TO LOCATION OF DATA FILES
+    stg.dataDir = 'C:\Users\Michele\Documents\GitHub\OED-graphical-models\BayesianOED\Sachs Sim Data\1800obs600\';
+else
+    error('Not a valid "dataOrigin" type.')
 end
 %% set simulation settings (stored in 'stg' structure)
 %   this object will be passed to other functions

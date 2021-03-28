@@ -13,14 +13,15 @@ stg.bnet = mkBnet('ten'); % name of structure defined in mkBnet.m (e.g.'line' or
 stg.dataOrigin = 'simFromCPD'; % (0) simFromCPD; (1) useSachsData; (2) sampSimData 
 if ~isequal(stg.dataOrigin, 'simFromCPD')
     % EDIT THIS PATH TO POINT TO LOCATION OF DATA FILES
-    stg.dataDir = 'C:\Users\Michele\Documents\GitHub\OED-graphical-models\BayesianOED\Sachs Sim Data\1800obs600\';
+    %stg.dataDir = 'C:\Users\Michele\Documents\GitHub\OED-graphical-models\BayesianOED\Sachs Sim Data\1800obs600\';
+    stg.dataDir = '
 elseif isequal(stg.dataOrigin, 'simFromCPD')
     stg.bnet = genRandomCPT(stg.bnet);
 end
 %% set simulation settings (stored in 'stg' structure)
 %   this object will be passed to other functions
-NSIMS = 5;
-stg.method  = 'DP'; % specify partition type or other method, e.g. 'Random' 
+NSIMS = 3;
+stg.method  = 'MEC'; % specify partition type or other method, e.g. 'Random' 
 stg.scen = 1;
 stg.maxExp = 6;
 stg.nInitialObs = 500;
@@ -55,7 +56,7 @@ dirName = sprintf('%s_Scen%d',stg.method, stg.scen);
     end
 % now add this subdirectory to the results path
 resPath = sprintf('%s%s/',resPath, dirName);
-
+cd .. % move back up a directory
 %% make array of nodes for random node interventions
 %   sample from the eligible nodes without replacement
 if isequal(stg.method, 'Random')
@@ -79,9 +80,9 @@ set(gcf, 'Position', [0 0 500 400])
 colorbar;
 saveas(gcf, sprintf('%s/benchmarkDAG.png',resPath));
 
-%% create settings file
+%% save settings object
 stg.resPath = resPath;
-save(sprintf('%s/settings.mat',resPath), stg); 
+save(sprintf('%s/settings.mat',resPath), 'stg'); 
 %% initialize objects for storing the intervention seq and diagnostic results
 intvSeqRes = NaN(NSIMS, stg.maxExp); 
 tprRes = NaN(NSIMS, stg.maxExp); 
@@ -90,13 +91,12 @@ tnrRes = NaN(NSIMS, stg.maxExp);
 fnrRes = NaN(NSIMS, stg.maxExp); 
 postEntropyRes = NaN(NSIMS, stg.maxExp);
 maxHRes = NaN(NSIMS, stg.maxExp);
-hammingMeanRes = NaN(NSIMS, stg.maxExp);
-hammingVarRes = NaN(NSIMS, stg.maxExp);
+hammingDistRes = NaN(NSIMS, stg.maxExp);
 
 %% Loop for running the simulations
 for sim = 1:NSIMS
     sprintf('\n Starting simulation %d of %d. \n', sim, NSIMS)
-    [interventionSeq, diagnostics, postE, maxH, hammingMean, hammingVar] = startSim(stg, sim);
+    [interventionSeq, diagnostics, postE, maxH] = startSim(stg, sim);
     intvSeqRes(sim,:) = interventionSeq;
     tprRes(sim,:) = diagnostics.tpr;
     fprRes(sim,:) = diagnostics.fpr;
@@ -104,8 +104,8 @@ for sim = 1:NSIMS
     fnrRes(sim,:) = diagnostics.fnr;
     postEntropyRes(sim,:) = postE;
     maxHRes(sim,:) = maxH;
-    hammingMeanRes(sim,:) = hammingMean;
-    hammingVarRes(sim,:) = hammingVar;
+    hammingDistRes(sim,:) = diagnostics.hammingDist;
+    %hammingVarRes(sim,:) = hammingVar;
     
     csvwrite(sprintf('%s/intvSeq_Results.csv',resPath),intvSeqRes);
     csvwrite(sprintf('%s/tpr_Results.csv',resPath),tprRes);
@@ -114,8 +114,8 @@ for sim = 1:NSIMS
     csvwrite(sprintf('%s/fnr_Results.csv',resPath),fnrRes);
     csvwrite(sprintf('%s/postEntropy_Results.csv',resPath),postEntropyRes);
     csvwrite(sprintf('%s/maxH_Results.csv',resPath),maxHRes);    
-    csvwrite(sprintf('%s/hammingMean_Results.csv',resPath),hammingMeanRes);
-    csvwrite(sprintf('%s/hammingVar_Results.csv',resPath),hammingVarRes);
+    csvwrite(sprintf('%s/hammingDist_Results.csv',resPath),hammingDistRes);
+    %csvwrite(sprintf('%s/hammingVar_Results.csv',resPath),hammingVarRes);
     if isequal(stg.method, 'Random')
         csvwrite(sprintf('%s/randNodeSeq.csv',resPath),randNodeSeq);
     end

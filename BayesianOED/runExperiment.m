@@ -4,19 +4,20 @@ function [ bnet, entropy, dg, seqData, seqClamped, remData, remClamped] = runExp
 bnet = stg.bnet;
 entropy = []; % initialize object to store various types of entropy
 if isequal(stg.dataOrigin, 'simFromCPD')
-    [sampData, sampClamped] = mkData(bnet, nObservationCases, interventions, nInterventionCases );
     % note that in this case "interventions" is a cell array indicating
     % which node to intervene on and what to set it to
+    [sampData, sampClamped] = mkData(bnet, nObservationCases, interventions, nInterventionCases );
 end
 if (isequal(stg.dataOrigin, 'useSachsData'))
-    [sampData, sampClamped, remData, remClamped, bnet ] = sampleSachsData(bnet, nObservationCases, nInterventionCases, interventions, expNum, remData, remClamped);
     % note that in this case "interventions" is a vector equal to
     % interventionSeq
+    [sampData, sampClamped, remData, remClamped, bnet ] = sampleSachsData(bnet, nObservationCases, nInterventionCases, interventions, expNum, remData, remClamped);
+
 end
 if (isequal(stg.dataOrigin, 'sampSimData'))
-    [sampData, sampClamped, remData, remClamped, bnet ] = sampleSimData(bnet, nObservationCases, nInterventionCases, interventions, expNum, remData, remClamped);
     % note that in this case "interventions" is a vector equal to
     % interventionSeq
+    [sampData, sampClamped, remData, remClamped, bnet ] = sampleSimData(bnet, nObservationCases, nInterventionCases, interventions, expNum, remData, remClamped);
 end
 seqData = [seqData sampData];
 seqClamped = [seqClamped sampClamped];

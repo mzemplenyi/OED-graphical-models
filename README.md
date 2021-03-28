@@ -11,4 +11,5 @@ All relevant code is included in this repository. The code has only been tested 
 * Run the script 'mkPath', which adds all necessary folders to the path and compiles Mex files.
 * For simulations:
   * Specify the structure and conditional probability distribution for the DAG that will be used to generate data in the file 'mkBnet'.
-  * Enter the desired simulation settings in the 'startSim' file and then run that script.  
+  * Enter the desired simulation settings in the 'setupOED' file and then run that script. 
+  * Result files will automatically populate in a new subdirectory within ./BayesianOED/Results. The new subdirectory will be labeled as "methodName_scenarioNum", e.g. "MEC_Scen1". 
