@@ -1,14 +1,15 @@
-function [interventionSeq, diagnostics, postE, maxH, hammingMean, hammingVar] = getObsData(sim, bnet)
-global chooseIntervention; 
-global Scen;
-global scenPath; 
-global simPath;
-global maxExperiment;
+function [interventionSeq, diagnostics, postE, maxH, hammingMean, hammingVar] = startSim(stg, sim )
+
+simPath = sprintf('%sSim%d',stg.resPath, sim);
+mkdir(simPath)
+bnet = stg.bnet;
+
+
 global experiment; experiment = 1;
 global nObsCases; global nInitialObs;
 global nIntvCases;
 global sampleSachs;
-global randNodeSeq;
+
 
 if sampleSachs == 2  % sample from simulated Sachs data with interventions on all 11 nodes
     %cd('C:/Users/Michele/Documents/Jeff Miller/BDAGL/BDAGLMZ/Sim Data/EightTree_200/');
@@ -30,23 +31,6 @@ if sampleSachs == 2  % sample from simulated Sachs data with interventions on al
     remClamped = clamped;
 end   
 
-
-if sampleSachs == 1
-    %% loads 'data' (11x5400 obs) and 'clamped'(11x5400 obs) 
-    load('C:/Users/Michele/Documents/Jeff Miller/BDAGL/BDAGLMZ/demos2/sachsDiscretizedData.mat'); %% move this to runSachs.m file
-    %% initially all the data is the "remaining" data
-    remData = data;
-    remClamped = clamped;
-end
-if sampleSachs == 0
-    remData = [];
-    remClamped = [];
-end
-
-
-
-simPath = sprintf('%sSim%d',scenPath, sim);
-mkdir(simPath)
 stopThreshold = -0.1;
 uncertainty = 1;
 %fixedIntvValue = 1; % 0 = adaptive intvValue, 1 = fixed intvValue
@@ -60,19 +44,19 @@ seqClamped = NaN(bnet.nNodes, 0);
 
 %% 
 cd 'C:/Users/Michele/Documents/Jeff Miller/BDAGL/BDAGLMZ/';
-interventionSeq = NaN(1,maxExperiment);interventionSeq(1) = 0; % vector to store which experiments are run, first experiment is just observational 
-tpr = NaN(1,maxExperiment);
-fpr = NaN(1,maxExperiment);
-tnr = NaN(1,maxExperiment);
-fnr = NaN(1,maxExperiment);
-postE = NaN(1,maxExperiment);
-%skelE = NaN(1,maxExperiment);
-maxH = NaN(1,maxExperiment);
-HExp = NaN(bnet.nNodes, maxExperiment); 
-hammingMean = NaN(1,maxExperiment);
-hammingVar = NaN(1,maxExperiment);
+interventionSeq = NaN(1,stg.maxExp);interventionSeq(1) = 0; % vector to store which experiments are run, first experiment is just observational 
+tpr = NaN(1,stg.maxExp);
+fpr = NaN(1,stg.maxExp);
+tnr = NaN(1,stg.maxExp);
+fnr = NaN(1,stg.maxExp);
+postE = NaN(1,stg.maxExp);
+%skelE = NaN(1,stg.maxExp);
+maxH = NaN(1,stg.maxExp);
+HExp = NaN(bnet.nNodes, stg.maxExp); 
+hammingMean = NaN(1,stg.maxExp);
+hammingVar = NaN(1,stg.maxExp);
 
-while(experiment <= maxExperiment)
+while(experiment <= stg.maxExp)
     if experiment == 1
     %% Generate only observational data
         nObservationCases = nInitialObs; % # observational data cases
@@ -122,7 +106,7 @@ while(experiment <= maxExperiment)
    
  
     HExp(:, experiment) =  entropy.H;
-    if(experiment < maxExperiment) % need this since on last experiment bnet.eligibleNodes might be emptyset and cause error (esp.when sampleSachsData = 1)
+    if(experiment < stg.maxExp) % need this since on last experiment bnet.eligibleNodes might be emptyset and cause error (esp.when sampleSachsData = 1)
         maxH(experiment) =  max(entropy.H(bnet.eligibleNodes)); 
     end
     postE(experiment) = entropy.postEntropy; 
@@ -132,8 +116,9 @@ while(experiment <= maxExperiment)
     fnr(experiment) = dg.fnr;
     hammingMean(experiment) = hamming.mean;
     hammingVar(experiment) = hamming.var;    
-    
-    if (experiment > 1 && sampleSachs == 0 && chooseIntervention ~= 1 && chooseIntervention ~= 2)
+    % MAKE SURE THAT THE INTERVENED ON NODE IS REMOVED FROM SET OF ELIGIBLE
+    % NODES
+    if (experiment > 1 && sampleSachs == 0)
         bnet.eligibleNodes(bnet.eligibleNodes == interveneNode) = [];
     end
     experiment = experiment + 1;
@@ -141,15 +126,15 @@ end
 csvwrite(sprintf('%s/interventionSeq.txt',simPath),interventionSeq);
 csvwrite(sprintf('%s/HExp.csv',simPath),HExp);
 
-%% make the interventionSeq vector the same length as maxExperiments 
-if length(interventionSeq) < maxExperiment
-    interventionSeq(end+1:maxExperiment) = NaN;
-    tpr(end+1:maxExperiment) = NaN;
-    fpr(end+1:maxExperiment) = NaN;
-    tnr(end+1:maxExperiment) = NaN;
-    fnr(end+1:maxExperiment) = NaN;
-    postE(end+1:maxExperiment) = NaN;
-    maxH(end+1:maxExperiment) = NaN;
+%% make the interventionSeq vector the same length as stg.maxExps 
+if length(interventionSeq) < stg.maxExp
+    interventionSeq(end+1:stg.maxExp) = NaN;
+    tpr(end+1:stg.maxExp) = NaN;
+    fpr(end+1:stg.maxExp) = NaN;
+    tnr(end+1:stg.maxExp) = NaN;
+    fnr(end+1:stg.maxExp) = NaN;
+    postE(end+1:stg.maxExp) = NaN;
+    maxH(end+1:stg.maxExp) = NaN;
 end    
 diagnostics.tpr = tpr;
 diagnostics.fpr = fpr;

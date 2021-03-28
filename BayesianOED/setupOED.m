@@ -72,8 +72,10 @@ colorbar;
 saveas(gcf, sprintf('%s/benchmarkDAG.png',resPath));
 
 %% create settings file
+stg.bnet = bnet;
+stg.resPath = resPath;
 save(sprintf('%s/stg.mat',resPath)); 
-%% create objects for storing the intervention seq and diagnostic results
+%% initialize objects for storing the intervention seq and diagnostic results
 intvSeqRes = NaN(NSIMS, stg.maxExp); 
 tprRes = NaN(NSIMS, stg.maxExp); 
 fprRes = NaN(NSIMS, stg.maxExp); 
@@ -87,7 +89,7 @@ hammingVarRes = NaN(NSIMS, stg.maxExp);
 %% Loop for running the simulations
 for sim = 1:NSIMS
     sprintf('\n Starting simulation %d of %d. \n', sim, NSIMS)
-    [interventionSeq, diagnostics, postE, maxH, hammingMean, hammingVar] = startSim(sim, bnet);
+    [interventionSeq, diagnostics, postE, maxH, hammingMean, hammingVar] = startSim(stg, sim);
     intvSeqRes(sim,:) = interventionSeq;
     tprRes(sim,:) = diagnostics.tpr;
     fprRes(sim,:) = diagnostics.fpr;
