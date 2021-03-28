@@ -97,7 +97,7 @@ while(expNum <= stg.maxExp)
         end
     end % closes "if expNum == 1" statement
     
-    [bnet, entropy, dg, hamming, seqData, seqClamped, remData, remClamped] = runExperiment(stg, expNum, nObservationCases, interventions, nInterventionCases, seqData, seqClamped, remData, remClamped );   
+    [bnet, entropy, dg, hamming, seqData, seqClamped, remData, remClamped] = runExperiment(stg, simPath, expNum, nObservationCases, interventions, nInterventionCases, seqData, seqClamped, remData, remClamped );   
     
     HExp(:, expNum) =  entropy.H;
     if(expNum < stg.maxExp) % need this since on last experiment bnet.eligibleNodes might be emptyset and cause error (esp.when sampleSachsData = 1)
